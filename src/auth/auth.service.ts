@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
@@ -13,11 +13,37 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
-    // Create the user with default role
+  async register(
+    registerDto: RegisterDto,
+    currentUser?: { id: string; email: string; role: string },
+  ): Promise<AuthResponseDto> {
+    // Check if this is the first user
+    const allUsers = await this.usersService.findAll();
+    const isFirstUser = allUsers.length === 0;
+
+    let userRole: UserRole;
+
+    if (isFirstUser) {
+      // First user automatically becomes admin
+      userRole = UserRole.ADMIN;
+    } else {
+      // Subsequent users require admin authorization
+      if (!currentUser) {
+        throw new UnauthorizedException('Authentication required to create new users');
+      }
+
+      if (currentUser.role !== UserRole.ADMIN) {
+        throw new ForbiddenException('Only admins can create new users');
+      }
+
+      // Admin can specify role, otherwise default to USER
+      userRole = registerDto.role || UserRole.USER;
+    }
+
+    // Create the user with determined role
     const user = await this.usersService.create({
       ...registerDto,
-      role: UserRole.USER,
+      role: userRole,
     });
 
     // Generate JWT token
