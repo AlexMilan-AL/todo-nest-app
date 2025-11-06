@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { IUserRepository } from '../interfaces/user-repository.interface';
-import { User } from '../entities/user.entity';
+import { User, UserRole } from '../entities/user.entity';
 import { CreateUserDto } from '../dto/create-user.dto';
 
 @Injectable()
@@ -9,37 +10,65 @@ export class UserRepository implements IUserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    return this.prisma.user.create({
+    const user = await this.prisma.user.create({
       data: {
         name: createUserDto.name,
         email: createUserDto.email,
         password: createUserDto.password,
         role: createUserDto.role || 'user',
       },
-    }) as Promise<User>;
+    });
+
+    return {
+      ...user,
+      role: user.role as UserRole,
+    } as User;
   }
 
   async findById(id: string): Promise<User | null> {
-    return this.prisma.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id },
-    }) as Promise<User | null>;
+    });
+    
+    if (!user) return null;
+    
+    return {
+      ...user,
+      role: user.role as UserRole,
+    } as User;
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.prisma.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { email },
-    }) as Promise<User | null>;
+    });
+    
+    if (!user) return null;
+    
+    return {
+      ...user,
+      role: user.role as UserRole,
+    } as User;
   }
 
   async findAll(): Promise<User[]> {
-    return this.prisma.user.findMany() as Promise<User[]>;
+    const users = await this.prisma.user.findMany();
+    return users.map(user => ({
+      ...user,
+      role: user.role as UserRole,
+    })) as User[];
   }
 
   async update(id: string, data: Partial<User>): Promise<User> {
-    return this.prisma.user.update({
+    const user = await this.prisma.user.update({
       where: { id },
       data,
-    }) as Promise<User>;
+    });
+    
+    return {
+      ...user,
+      role: user.role as UserRole,
+    } as User;
   }
 
   async delete(id: string): Promise<void> {
