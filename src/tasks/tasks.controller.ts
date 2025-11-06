@@ -24,12 +24,12 @@ import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 
 @ApiTags('tasks')
 @Controller('tasks')
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
 export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new task' })
   @ApiResponse({
@@ -46,6 +46,8 @@ export class TasksController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get paginated list of user tasks' })
   @ApiResponse({
     status: 200,
