@@ -1,5 +1,6 @@
 import { Task } from '../entities/task.entity';
 import { CreateTaskDto } from '../dto/create-task.dto';
+import { UpdateTaskDto } from '../dto/update-task.dto';
 
 export interface ITaskRepository {
   create(createTaskDto: CreateTaskDto, ownerId: string): Promise<Task>;
@@ -12,7 +13,7 @@ export interface ITaskRepository {
   ): Promise<Task[]>;
   countByOwnerId(ownerId: string): Promise<number>;
   findAll(): Promise<Task[]>;
-  update(id: string, data: Partial<Task>): Promise<Task>;
+  update(id: string, updateTaskDto: UpdateTaskDto): Promise<Task>;
   delete(id: string): Promise<void>;
 }
 

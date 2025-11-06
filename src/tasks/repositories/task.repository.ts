@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ITaskRepository } from '../interfaces/task-repository.interface';
 import { Task } from '../entities/task.entity';
 import { CreateTaskDto } from '../dto/create-task.dto';
+import { UpdateTaskDto } from '../dto/update-task.dto';
 
 @Injectable()
 export class TaskRepository implements ITaskRepository {
@@ -51,13 +52,15 @@ export class TaskRepository implements ITaskRepository {
   }
 
   async findAll(): Promise<Task[]> {
-    return this.prisma.task.findMany() as Promise<Task[]>;
+    return this.prisma.task.findMany({
+      orderBy: { createdAt: 'desc' },
+    }) as Promise<Task[]>;
   }
 
-  async update(id: string, data: Partial<Task>): Promise<Task> {
+  async update(id: string, updateTaskDto: UpdateTaskDto): Promise<Task> {
     return this.prisma.task.update({
       where: { id },
-      data,
+      data: updateTaskDto,
     }) as Promise<Task>;
   }
 

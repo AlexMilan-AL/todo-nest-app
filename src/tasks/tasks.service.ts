@@ -1,5 +1,6 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { CreateTaskDto } from './dto/create-task.dto';
+import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskResponseDto } from './dto/task-response.dto';
 import { TASK_REPOSITORY } from './interfaces/task-repository.interface';
 import type { ITaskRepository } from './interfaces/task-repository.interface';
@@ -61,5 +62,38 @@ export class TasksService {
   async findAll(): Promise<TaskResponseDto[]> {
     const tasks = await this.taskRepository.findAll();
     return tasks.map((task) => new TaskResponseDto(task));
+  }
+
+  async update(
+    id: string,
+    updateTaskDto: UpdateTaskDto,
+    userId: string,
+  ): Promise<TaskResponseDto> {
+    const task = await this.taskRepository.findById(id);
+
+    if (!task) {
+      throw new NotFoundException(`Task with ID ${id} not found`);
+    }
+
+    if (task.ownerId !== userId) {
+      throw new ForbiddenException('You can only update your own tasks');
+    }
+
+    const updatedTask = await this.taskRepository.update(id, updateTaskDto);
+    return new TaskResponseDto(updatedTask);
+  }
+
+  async delete(id: string, userId: string): Promise<void> {
+    const task = await this.taskRepository.findById(id);
+
+    if (!task) {
+      throw new NotFoundException(`Task with ID ${id} not found`);
+    }
+
+    if (task.ownerId !== userId) {
+      throw new ForbiddenException('You can only delete your own tasks');
+    }
+
+    await this.taskRepository.delete(id);
   }
 }
