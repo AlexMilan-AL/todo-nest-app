@@ -7,11 +7,11 @@ import {
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
-import {
-  USER_REPOSITORY,
-} from './interfaces/user-repository.interface';
+import { USER_REPOSITORY } from './interfaces/user-repository.interface';
 import type { IUserRepository } from './interfaces/user-repository.interface';
 import { User } from './entities/user.entity';
+import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Injectable()
 export class UsersService {
@@ -56,6 +56,30 @@ export class UsersService {
   async findAll(): Promise<UserResponseDto[]> {
     const users = await this.userRepository.findAll();
     return users.map((user) => new UserResponseDto(user));
+  }
+
+  async findAllPaginated(
+    paginationDto: PaginationDto,
+  ): Promise<PaginatedResponseDto<UserResponseDto>> {
+    const page = paginationDto.page || 1;
+    const limit = paginationDto.limit || 10;
+    const skip = (page - 1) * limit;
+
+    const users = await this.userRepository.findAll();
+    const total = users.length;
+    const paginatedUsers = users.slice(skip, skip + limit);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: paginatedUsers.map((user) => new UserResponseDto(user)),
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    };
   }
 
   async validatePassword(
