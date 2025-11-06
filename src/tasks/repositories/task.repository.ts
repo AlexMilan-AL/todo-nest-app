@@ -27,7 +27,27 @@ export class TaskRepository implements ITaskRepository {
   async findByOwnerId(ownerId: string): Promise<Task[]> {
     return this.prisma.task.findMany({
       where: { ownerId },
+      orderBy: { createdAt: 'desc' },
     }) as Promise<Task[]>;
+  }
+
+  async findByOwnerIdPaginated(
+    ownerId: string,
+    skip: number,
+    take: number,
+  ): Promise<Task[]> {
+    return this.prisma.task.findMany({
+      where: { ownerId },
+      skip,
+      take,
+      orderBy: { createdAt: 'desc' },
+    }) as Promise<Task[]>;
+  }
+
+  async countByOwnerId(ownerId: string): Promise<number> {
+    return this.prisma.task.count({
+      where: { ownerId },
+    });
   }
 
   async findAll(): Promise<Task[]> {
